@@ -1,0 +1,96 @@
+{
+  "accuracy": 0.6409,
+  "precision_macro": 0.6349,
+  "recall_macro": 0.6349,
+  "f1_macro": 0.6349,
+  "precision_weighted": 0.6408,
+  "recall_weighted": 0.6409,
+  "f1_weighted": 0.6408,
+  "confusion_matrix": [
+    [
+      487,
+      227
+    ],
+    [
+      228,
+      325
+    ]
+  ],
+  "best_C": 0.05,
+  "val_f1_macro": 0.6663,
+  "c_search_results": {
+    "0.01": {
+      "val_f1_macro": 0.6577,
+      "val_accuracy": 0.6581
+    },
+    "0.05": {
+      "val_f1_macro": 0.6663,
+      "val_accuracy": 0.6667
+    },
+    "0.1": {
+      "val_f1_macro": 0.6562,
+      "val_accuracy": 0.6565
+    },
+    "0.5": {
+      "val_f1_macro": 0.6269,
+      "val_accuracy": 0.6277
+    },
+    "1.0": {
+      "val_f1_macro": 0.6181,
+      "val_accuracy": 0.6192
+    },
+    "5.0": {
+      "val_f1_macro": 0.6152,
+      "val_accuracy": 0.6168
+    }
+  },
+  "train_time_sec": 0.3008,
+  "inference_time_sec": 0.0009,
+  "inference_per_sample_ms": 0.0007,
+  "peak_memory_mb": 0.64,
+  "model_size_kb": 486.7,
+  "word_vectorizer_size_kb": 965.1,
+  "char_vectorizer_size_kb": 1253.4,
+  "vec_time_word_sec": 0.1671,
+  "vec_time_char_sec": 0.5622,
+  "vec_time_total_sec": 0.7292,
+  "word_tfidf_params": {
+    "max_features": 100000,
+    "sublinear_tf": true,
+    "ngram_range": [
+      1,
+      2
+    ],
+    "min_df": 2,
+    "strip_accents": "unicode",
+    "analyzer": "word",
+    "token_pattern": "\\b[a-zA-Z][a-zA-Z0-9']+\\b"
+  },
+  "char_tfidf_params": {
+    "max_features": 50000,
+    "sublinear_tf": true,
+    "ngram_range": [
+      3,
+      5
+    ],
+    "min_df": 3,
+    "strip_accents": "unicode",
+    "analyzer": "char_wb"
+  },
+  "metadata_features": [
+    "false_count",
+    "barely_true_count",
+    "pants_fire_count",
+    "mostly_true_count",
+    "half_true_count",
+    "party_enc",
+    "state_enc",
+    "speaker_job_enc"
+  ],
+  "word_vocab_size": 24824,
+  "char_vocab_size": 37374,
+  "total_feature_dim": 62206,
+  "train_samples": 10240,
+  "val_samples": 1284,
+  "test_samples": 1267
+}
