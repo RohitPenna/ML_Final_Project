@@ -4,81 +4,104 @@
 
 ---
 
-## Raw Source Files
+## Dataset: LIAR
 
-The raw data lives in `data/` and consists of two CSV files from the [ISOT Fake News Dataset](https://www.uvic.ca/engineering/ece/isot/datasets/fake-news/index.php), covering political and world news articles from **2016–2018**:
+The dataset used in this project is the **[LIAR dataset](https://huggingface.co/datasets/liar)** (Wang, 2017), a benchmark for fake news detection sourced from **PolitiFact**. It contains short political statements made by public figures, each manually fact-checked and assigned one of six veracity labels.
 
-| File | Articles | Label |
+- **Source:** PolitiFact.com
+- **Total statements:** 12,791
+- **Label type:** 6-class → binarized to 2-class for this project
+- **Statement length:** mean ~18 words, median 17 words (range: 2–467)
+
+---
+
+## Columns
+
+| Column | Description |
+|---|---|
+| `id` | JSON filename identifier |
+| `label` | Veracity label (6-class, see below) |
+| `statement` | The political claim being fact-checked |
+| `subjects` | Comma-separated topic tags |
+| `speaker` | Name of the person who made the claim |
+| `speaker_job` | Job title of the speaker |
+| `state` | State the speaker is from |
+| `party` | Political party affiliation |
+| `barely_true_count` | Historical count of barely-true rulings for this speaker |
+| `false_count` | Historical count of false rulings for this speaker |
+| `half_true_count` | Historical count of half-true rulings for this speaker |
+| `mostly_true_count` | Historical count of mostly-true rulings for this speaker |
+| `pants_fire_count` | Historical count of pants-on-fire rulings for this speaker |
+| `context` | Venue/context of the statement |
+
+---
+
+## Label Distribution
+
+The raw dataset has **6 fine-grained labels**:
+
+| Label | Count | Share |
 |---|---|---|
-| `data/True.csv` | 21,417 | Real (0) |
-| `data/Fake.csv` | 23,481 | Fake (1) |
-| **Total** | **44,898** | |
+| half-true | 2,627 | 20.5% |
+| false | 2,507 | 19.6% |
+| mostly-true | 2,454 | 19.2% |
+| barely-true | 2,103 | 16.4% |
+| true | 2,053 | 16.1% |
+| pants-fire | 1,047 | 8.2% |
+| **Total** | **12,791** | |
 
-Each raw article has four fields: `title`, `text`, `subject`, and `date`.
+### Binary Label Mapping
 
-**Subject breakdown — Fake.csv:**
+For binary classification (real vs. fake), labels are mapped as follows:
+
+| Original Label | Binary Label |
+|---|---|
+| true | 0 — Real |
+| mostly-true | 0 — Real |
+| half-true | 0 — Real |
+| barely-true | 1 — Fake |
+| false | 1 — Fake |
+| pants-fire | 1 — Fake |
+
+---
+
+## Speaker & Party Breakdown
+
+**Top parties:**
+| Party | Statements |
+|---|---|
+| Republican | 5,665 |
+| Democrat | 4,137 |
+| None / Unaffiliated | 2,181 |
+| Organization | 264 |
+| Independent | 180 |
+
+**Top subjects:**
 | Subject | Count |
 |---|---|
-| News | 9,050 |
-| politics | 6,841 |
-| left-news | 4,459 |
-| Government News | 1,570 |
-| US_News | 783 |
-| Middle-east | 778 |
-
-**Subject breakdown — True.csv:**
-| Subject | Count |
-|---|---|
-| politicsNews | 11,272 |
-| worldnews | 10,145 |
+| economy | 1,432 |
+| health-care | 1,426 |
+| taxes | 1,218 |
+| federal-budget | 937 |
+| education | 926 |
+| jobs | 899 |
+| state-budget | 879 |
+| candidates-biography | 805 |
+| elections | 757 |
+| immigration | 642 |
 
 ---
 
-## Why the Raw Data Is Too Easy
+## Pre-split Files
 
-The raw dataset contains several **data-leakage shortcuts** that allow models to achieve 99%+ accuracy without learning anything meaningful about language or content. We deliberately remove these before training so that all six models — from Logistic Regression to BERT — are actually challenged:
+The dataset comes pre-split into three TSV files in `Data/`:
 
-| Shortcut | Example | Problem |
+| Split | File | Rows |
 |---|---|---|
-| Source attributions in titles | `"Trump fires Comey: Reuters"` | Reveals wire source, not content |
-| Article format prefixes | `"Factbox: ..."`, `"WATCH: ..."` | Reveals article type / outlet style |
-| Parenthetical media tags | `"(VIDEO)"`, `"(IMAGES)"`, `"(TWEET)"` | Strong stylistic signal tied to fake news |
-| `subject` column | `"politicsNews"` vs `"News"` | Near-perfect label by itself |
-| `date` column | — | Not informative; encourages overfitting to time period |
-| Full `text` body | `"WASHINGTON (Reuters) - ..."` | Dateline alone identifies real Reuters articles |
-
----
-
-## Cleaning Steps Applied
-
-Run `prepare_data.py` to produce clean, debiased splits:
-
-```bash
-python3 prepare_data.py
-```
-
-The script applies the following transformations before splitting:
-
-1. **Drop `subject` and `date`** — forces models to work on text content only
-2. **Drop full `text`** — use only the `title`; the article body is too easy due to datelines and embedded source mentions
-3. **Strip trailing source attributions** from titles — removes patterns like `: Reuters`, `: CNN`, `: NYT`, `: Pentagon`, `: report`, `: sources`
-4. **Strip leading format prefixes** — removes `WATCH:`, `Factbox:`, `UPDATE:`, `BREAKING:`, `EXCLUSIVE:`
-5. **Strip parenthetical media tags** — removes `(VIDEO)`, `(IMAGES)`, `(TWEET)`, `(GRAPHIC IMAGES)`, `(PHOTOS)`
-
-**Final columns:** `title` (str), `label` (int: 0 = real, 1 = fake)
-
----
-
-## Data Splits
-
-Splits are saved to `data/splits/` using **stratified sampling** to preserve the ~52/48 class ratio across all three sets. The full dataset is shuffled with a fixed random seed (`42`) for reproducibility.
-
-| Split | File | Rows | Share | Fake (1) | Real (0) |
-|---|---|---|---|---|---|
-| Train | `data/splits/train.csv` | 31,428 | 70% | 16,436 (52.3%) | 14,992 (47.7%) |
-| Validation | `data/splits/val.csv` | 6,735 | 15% | 3,522 (52.3%) | 3,213 (47.7%) |
-| Test | `data/splits/test.csv` | 6,735 | 15% | 3,523 (52.3%) | 3,212 (47.7%) |
-| **Total** | | **44,898** | **100%** | **23,481 (52.3%)** | **21,417 (47.7%)** |
+| Train | `Data/train.tsv` | 10,240 (80.1%) |
+| Validation | `Data/valid.tsv` | 1,284 (10.0%) |
+| Test | `Data/test.tsv` | 1,267 (9.9%) |
+| **Total** | | **12,791** |
 
 - **Train** — used to fit all models
 - **Validation** — used during development for hyperparameter tuning and early stopping
@@ -86,9 +109,23 @@ Splits are saved to `data/splits/` using **stratified sampling** to preserve the
 
 ---
 
+## Key Characteristics vs. ISOT
+
+| Property | LIAR | ISOT (previous) |
+|---|---|---|
+| Size | 12,791 | 44,898 |
+| Input | Short political statements (~18 words) | News headlines / full articles |
+| Labels | 6-class (binarized) | Binary |
+| Source | PolitiFact | Reuters / unreliable outlets |
+| Speaker metadata | Yes | No |
+| Domain leakage risk | Low | High (datelines, source names) |
+| Generalization difficulty | High | Low |
+
+---
+
 ## Models Using This Data
 
-All six models in this project train and evaluate on the same cleaned splits:
+All six models in this project train and evaluate on the same LIAR splits:
 
 | Model | Folder |
 |---|---|
