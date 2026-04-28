@@ -1,0 +1,103 @@
+================================================================================
+LightGBM + BERT Embeddings — Results History
+================================================================================
+
+--------------------------------------------------------------------------------
+Run 1 — CLS token only (baseline)
+--------------------------------------------------------------------------------
+Features    : BERT [CLS] embedding (768-dim), no metadata
+Params      : num_leaves=63, lr=0.05, n_estimators=500, min_child_samples=20
+Pooling     : CLS token only
+Early stop  : stopped at iteration 61 / 500
+
+Accuracy    : 0.5919
+Precision   : 0.5800 (macro)
+Recall      : 0.5700 (macro)
+F1 macro    : 0.5634
+F1 weighted : 0.5776
+
+              precision  recall  f1-score  support
+Real (0)       0.61      0.75     0.68      714
+Fake (1)       0.55      0.39     0.45      553
+
+Train time    : 2.79s
+Embed time    : train=99.0s  val=13.6s  test=13.7s
+Model size    : 469.3 KB
+
+--------------------------------------------------------------------------------
+Run 2 — Mean pooling + tuned hyperparameters
+--------------------------------------------------------------------------------
+Features    : BERT mean-pooled embedding (768-dim), no metadata
+Params      : num_leaves=31, lr=0.02, n_estimators=2000, min_child_samples=30,
+              subsample=0.8, colsample_bytree=0.8, reg_alpha=0.1, reg_lambda=0.1,
+              class_weight=balanced
+Pooling     : Mean pooling (all tokens, masked)
+Early stop  : stopped at iteration 273 / 2000
+
+Accuracy    : 0.6117
+Precision   : 0.6200 (macro)
+Recall      : 0.6150 (macro)
+F1 macro    : 0.6097
+F1 weighted : 0.6132
+
+              precision  recall  f1-score  support
+Real (0)       0.67      0.61     0.64      714
+Fake (1)       0.55      0.62     0.58      553
+
+Train time    : 5.30s
+Embed time    : train=105.2s  val=14.4s  test=13.9s
+Model size    : 1002.8 KB
+
+Changes from Run 1:
+  + Mean pooling instead of CLS              → richer representation for short text
+  + Lower learning rate (0.05 → 0.02)        → trained to iter 273 instead of 61
+  + class_weight=balanced                    → Fake recall jumped 39% → 62%
+  + Regularization (subsample, reg_alpha/lambda)
+
+--------------------------------------------------------------------------------
+Run 3 — Mean pooling + tuned params + speaker metadata  ★ BEST
+--------------------------------------------------------------------------------
+Features    : BERT mean-pooled embedding (768-dim) + 8 metadata features (776-dim total)
+              Metadata: false_count, barely_true_count, pants_fire_count,
+                        mostly_true_count, half_true_count,
+                        party_enc, state_enc, speaker_job_enc
+Params      : same as Run 2
+Pooling     : Mean pooling (all tokens, masked)
+Early stop  : stopped at iteration 410 / 2000
+
+Accuracy    : 0.7324
+Precision   : 0.7286 (macro)
+Recall      : 0.7304 (macro)
+F1 macro    : 0.7292
+F1 weighted : 0.7330
+
+              precision  recall  f1-score  support
+Real (0)       0.77      0.75     0.76      714
+Fake (1)       0.69      0.71     0.70      553
+
+Confusion matrix:
+              Predicted Real  Predicted Fake
+Actual Real        533             181
+Actual Fake        158             395
+
+Train time    : 7.67s
+Embed time    : train=110.8s  val=13.3s  test=14.7s
+Model size    : 1478.5 KB
+Peak memory   : 4.8 MB
+Inference     : 0.0087s total  |  0.0069ms per sample
+
+Changes from Run 2:
+  + Added 8 speaker metadata features       → +12.1% accuracy, +13.0% F1 macro
+    (speaker credibility history was by far the strongest signal)
+
+================================================================================
+Summary
+================================================================================
+
+  Run                          Accuracy   F1 Macro   F1 Weighted
+  -------------------------------------------------------------
+  1. CLS only (baseline)        59.2%      56.3%       57.8%
+  2. Mean pool + tuned params   61.2%      61.0%       61.3%
+  3. + Speaker metadata (best)  73.2%      72.9%       73.3%
+
+================================================================================

@@ -1,0 +1,63 @@
+{
+  "accuracy": 0.7324,
+  "precision_macro": 0.7286,
+  "recall_macro": 0.7304,
+  "f1_macro": 0.7292,
+  "precision_weighted": 0.734,
+  "recall_weighted": 0.7324,
+  "f1_weighted": 0.733,
+  "confusion_matrix": [
+    [
+      533,
+      181
+    ],
+    [
+      158,
+      395
+    ]
+  ],
+  "train_time_sec": 7.67,
+  "inference_time_sec": 0.0087,
+  "inference_per_sample_ms": 0.0069,
+  "peak_memory_mb": 4.8,
+  "model_size_kb": 1478.5,
+  "embed_extraction_train_sec": 110.83,
+  "embed_extraction_val_sec": 13.34,
+  "embed_extraction_test_sec": 14.69,
+  "bert_model": "bert-base-uncased",
+  "embedding_dim": 768,
+  "metadata_features": [
+    "false_count",
+    "barely_true_count",
+    "pants_fire_count",
+    "mostly_true_count",
+    "half_true_count",
+    "party_enc",
+    "state_enc",
+    "speaker_job_enc"
+  ],
+  "total_feature_dim": 776,
+  "batch_size": 32,
+  "max_length": 128,
+  "device": "cpu",
+  "lgbm_params": {
+    "num_leaves": 31,
+    "learning_rate": 0.02,
+    "n_estimators": 2000,
+    "min_child_samples": 30,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "reg_alpha": 0.1,
+    "reg_lambda": 0.1,
+    "class_weight": "balanced",
+    "objective": "binary",
+    "metric": "binary_logloss",
+    "random_state": 42,
+    "n_jobs": -1,
+    "verbose": -1
+  },
+  "best_iteration": 410,
+  "train_samples": 10240,
+  "val_samples": 1284,
+  "test_samples": 1267
+}

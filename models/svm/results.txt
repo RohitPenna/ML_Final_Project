@@ -1,0 +1,98 @@
+================================================================================
+SVM (LinearSVC) + TF-IDF — Results History
+================================================================================
+
+--------------------------------------------------------------------------------
+Run 1 — LinearSVC with TF-IDF unigrams + bigrams (baseline)
+--------------------------------------------------------------------------------
+Features    : TF-IDF (max_features=100000, sublinear_tf=True, ngram_range=(1,2),
+              min_df=2) — statement text only, no metadata
+              Actual vocab size: 24,824 (corpus too small to hit 100k limit)
+Params      : C=1.0, max_iter=2000
+
+Validation  : Accuracy=0.5966  F1 macro=0.5921
+
+Accuracy    : 0.6133
+Precision   : 0.6000 (macro)
+Recall      : 0.6000 (macro)
+F1 macro    : 0.6002
+F1 weighted : 0.6094
+
+              precision  recall  f1-score  support
+Real (0)       0.64      0.70     0.67      714
+Fake (1)       0.56      0.50     0.53      553
+
+Confusion matrix:
+              Predicted Real  Predicted Fake
+Actual Real        500             214
+Actual Fake        276             277
+
+Train time              : 0.024s
+Vectorization time      : train=0.172s  val=0.014s  test=0.013s
+Inference time          : total=?  per sample=?
+Peak memory             : (see results.json)
+SVM model size          : 194.7 KB
+TF-IDF vectorizer size  : 965.1 KB
+
+--------------------------------------------------------------------------------
+Run 2 — Word TF-IDF + Char TF-IDF + Metadata + C tuning  ★ BEST
+--------------------------------------------------------------------------------
+Features    : Word TF-IDF (unigrams+bigrams, 24,824 features)
+            + Char TF-IDF (char_wb 3-5 grams, 37,374 features)
+            + Speaker metadata (8 features, StandardScaler normalized)
+            = 62,206 total features
+Best C      : 0.05  (found via grid search over [0.01, 0.05, 0.1, 0.5, 1.0, 5.0])
+class_weight: balanced
+
+C grid search (val F1 macro):
+  C=0.01  →  0.6577
+  C=0.05  →  0.6663  ◄ best
+  C=0.1   →  0.6562
+  C=0.5   →  0.6269
+  C=1.0   →  0.6181
+  C=5.0   →  0.6152
+
+Validation  : Accuracy=0.6667  F1 macro=0.6663
+
+Accuracy    : 0.6409
+Precision   : 0.6350 (macro)
+Recall      : 0.6350 (macro)
+F1 macro    : 0.6349
+F1 weighted : 0.6408
+
+              precision  recall  f1-score  support
+Real (0)       0.68      0.68     0.68      714
+Fake (1)       0.59      0.59     0.59      553
+
+Train time (final SVM)  : 0.301s
+Vectorization time      : word=0.167s  char=0.562s  total=0.729s
+Model size              : 486.7 KB
+Word vectorizer size    : 965.1 KB
+Char vectorizer size    : 1253.4 KB
+
+Changes from Run 1:
+  + Char n-grams (3-5, char_wb)                → captures casing/punctuation patterns
+  + Speaker metadata (scaled with StandardScaler) → critical: raw values need scaling for SVM
+  + class_weight=balanced                       → prevents collapse to majority class
+  + C tuned via grid search (1.0 → 0.05)       → better regularization for small dataset
+
+================================================================================
+Comparison vs. LightGBM + BERT
+================================================================================
+
+  Model                              Accuracy   F1 Macro   Train Time
+  -------------------------------------------------------------------
+  SVM TF-IDF baseline (Run 1)         61.3%      60.0%      0.024s
+  SVM + char + metadata (Run 2)       64.1%      63.5%      0.301s
+  LightGBM + BERT mean pool           61.2%      61.0%      5.30s + 140s embed
+  LightGBM + BERT + metadata (best)   73.2%      72.9%      7.67s + 140s embed
+
+Key observations:
+  - Metadata scaling is critical for SVM — raw integer counts broke the model entirely
+  - SVM + metadata outperforms LightGBM + BERT (text only) despite being ~500x faster
+  - LightGBM + BERT + metadata still leads because tree models handle mixed-scale features
+    more naturally without requiring normalization
+  - SVM's metadata gain (+3.1% F1) is smaller than LightGBM's (+11.9% F1) because
+    tree-based models exploit feature interactions that linear SVMs can't capture
+
+================================================================================
