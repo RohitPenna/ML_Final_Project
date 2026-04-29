@@ -1,9 +1,11 @@
 import os
 import time
+import pickle
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.sparse import hstack
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import ComplementNB
 from sklearn.metrics import (accuracy_score, f1_score, precision_score,
                              recall_score, confusion_matrix, ConfusionMatrixDisplay)
 
@@ -26,18 +28,29 @@ train = train.dropna(subset=["statement"])
 val   = val.dropna(subset=["statement"])
 test  = test.dropna(subset=["statement"])
 
-vectorizer = TfidfVectorizer(stop_words="english", max_features=50000)
-X_train = vectorizer.fit_transform(train["statement"])
-X_val   = vectorizer.transform(val["statement"])
-X_test  = vectorizer.transform(test["statement"])
+word_vectorizer = TfidfVectorizer(stop_words="english", max_features=50000, analyzer="word")
+char_vectorizer = TfidfVectorizer(max_features=50000, analyzer="char", ngram_range=(2,4))
+
+X_train = hstack([word_vectorizer.fit_transform(train["statement"]),
+                  char_vectorizer.fit_transform(train["statement"])])
+X_val   = hstack([word_vectorizer.transform(val["statement"]),
+                  char_vectorizer.transform(val["statement"])])
+X_test  = hstack([word_vectorizer.transform(test["statement"]),
+                  char_vectorizer.transform(test["statement"])])
 
 y_train, y_val, y_test = train["label"], val["label"], test["label"]
 
-model = MultinomialNB()
+model = ComplementNB()
 start = time.time()
 model.fit(X_train, y_train)
 train_time = time.time() - start
 print(f"Training time: {train_time:.4f}s")
+model_size = len(pickle.dumps(model)) / 1024
+word_size  = len(pickle.dumps(word_vectorizer)) / 1024
+char_size  = len(pickle.dumps(char_vectorizer)) / 1024
+print(f"Model size:       {model_size:.1f} KB")
+print(f"Word TF-IDF size: {word_size:.1f} KB")
+print(f"Char TF-IDF size: {char_size:.1f} KB")
 
 def evaluate(name, X, y_true):
     y_pred = model.predict(X)
