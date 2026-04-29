@@ -1,4 +1,5 @@
 import os
+import time
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -33,7 +34,10 @@ X_test  = vectorizer.transform(test["statement"])
 y_train, y_val, y_test = train["label"], val["label"], test["label"]
 
 model = MultinomialNB()
+start = time.time()
 model.fit(X_train, y_train)
+train_time = time.time() - start
+print(f"Training time: {train_time:.4f}s")
 
 def evaluate(name, X, y_true):
     y_pred = model.predict(X)
